@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #login-form {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        .video-list {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Login -->
+    <div class="container">
+        <div id="login-form">
+            <h2 class="text-center mb-4">Admin Login</h2>
+            <input type="password" id="admin-password" class="form-control mb-3" placeholder="Enter password">
+            <button onclick="login()" class="btn btn-primary w-100">Login</button>
+        </div>
+
+        <!-- Admin Panel (Hidden until login) -->
+        <div id="admin-panel" style="display: none;">
+            <h3 class="my-4">Video Management</h3>
+            
+            <!-- Upload Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Upload New Video</h5>
+                    <input type="file" id="video-file" accept="video/*" class="form-control mt-2">
+                    <button onclick="uploadVideo()" class="btn btn-success mt-3">Upload Video</button>
+                </div>
+            </div>
+
+            <!-- Video List -->
+            <div class="card">
+                <div class="card-body">
+                    <h5>Existing Videos</h5>
+                    <div id="video-list" class="video-list">
+                        <!-- Videos will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin Password (In real implementation, use server-side authentication)
+        const ADMIN_PASSWORD = "admin123"; // Change this
+
+        function login() {
+            const password = document.getElementById('admin-password').value;
+            if(password === ADMIN_PASSWORD) {
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('login-form').style.display = 'none';
+                loadVideos();
+            } else {
+                alert('Incorrect password');
+            }
+        }
+
+        function uploadVideo() {
+            const fileInput = document.getElementById('video-file');
+            const file = fileInput.files[0];
+            if(file) {
+                // In real implementation: Upload to server
+                alert('Simulating upload: ' + file.name);
+                addVideoToList(file.name);
+            }
+        }
+
+        function addVideoToList(filename) {
+            const videoList = document.getElementById('video-list');
+            const videoItem = document.createElement('div');
+            videoItem.className = 'd-flex justify-content-between align-items-center mb-3 p-2 border';
+            videoItem.innerHTML = `
+                <span>${filename}</span>
+                <div>
+                    <button onclick="generateLink('${filename}')" class="btn btn-sm btn-info">Get Link</button>
+                    <button onclick="deleteVideo('${filename}')" class="btn btn-sm btn-danger">Delete</button>
+                </div>
+            `;
+            videoList.appendChild(videoItem);
+        }
+
+        function generateLink(filename) {
+            const baseUrl = window.location.origin;
+            const videoUrl = `${baseUrl}/index.html?video=${encodeURIComponent(filename)}`;
+            prompt('Share this link:', videoUrl);
+        }
+
+        function deleteVideo(filename) {
+            if(confirm(`Delete ${filename}?`)) {
+                // In real implementation: Delete from server
+                alert('Simulating deletion: ' + filename);
+            }
+        }
+
+        function loadVideos() {
+            // In real implementation: Fetch from server
+            const fakeVideos = ['example1.mp4', 'example2.mp4'];
+            fakeVideos.forEach(addVideoToList);
+        }
+    </script>
+</body>
+</html>
