@@ -1,1 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Portal</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        /* Basic styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 300px;
+            margin: 100px auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Age Verification Modal -->
+    <div id="ageModal" class="modal">
+        <div class="modal-content">
+            <h2>Age Verification</h2>
+            <p>Are you 18 years or older?</p>
+            <button onclick="verifyAge(true)">Yes</button>
+            <button onclick="verifyAge(false)">No</button>
+        </div>
+    </div>
 
+    <!-- Video Player Section -->
+    <div id="videoSection" style="display: none;">
+        <video id="videoPlayer" controls width="600"></video>
+    </div>
+
+    <!-- Admin Section -->
+    <div id="adminSection" style="display: none;">
+        <h2>Admin Controls</h2>
+        <input type="file" id="videoUpload">
+        <button onclick="uploadVideo()">Upload Video</button>
+        <div id="videoList"></div>
+    </div>
+
+    <!-- Logout/Admin Button -->
+    <button id="logoutBtn" style="display: none;" onclick="logout()">Logout</button>
+
+<script>
+    // Supabase Setup
+    const supabaseUrl = 'https://vyuzpbifhehfuovpasnd.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dXpwYmlmaGVoZnVvdnBhc25kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMzMTY3NTUsImV4cCI6MjA1ODg5Mjc1NX0.x-spQPfNRs-hN9fYRlvDjW4m4Mcbol5b48Fyc6WDn1s';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const bucketName = 'videos';
+
+    // Initialize page
+    document.getElementById('ageModal').style.display = 'block';
+
+    function verifyAge(isAdult) {
+        if (!isAdult) {
+            window.location.href = 'about:blank';
+            return;
+        }
+        document.getElementById('ageModal').style.display = 'none';
+        document.getElementById('videoSection').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'block';
+        loadVideo();
+    }
+
+    async function loadVideo() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoName = urlParams.get('video');
+        
+        if (videoName) {
+            const { data } = await supabase.storage
+                .from(bucketName)
+                .getPublicUrl(videoName);
+
+            document.getElementById('videoPlayer').src = data.publicUrl;
+        }
+    }
+
+    async function logout() {
+        const password = prompt('Enter admin password:');
+        if (password === 'Aparmit') {
+            document.getElementById('adminSection').style.display = 'block';
+            listVideos();
+        }
+    }
+
+    async function uploadVideo() {
+        const file = document.getElementById('videoUpload').files[0];
+        if (!file) return;
+
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(file.name, file);
+
+        if (error) {
+            alert('Upload error: ' + error.message);
+            return;
+        }
+
+        const { data: urlData } = await supabase.storage
+            .from(bucketName)
+            .getPublicUrl(data.path);
+
+        alert(`Video uploaded! Share this link: ${window.location.href}?video=${data.path}`);
+        listVideos();
+    }
+
+    async function listVideos() {
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .list();
+
+        const videoList = document.getElementById('videoList');
+        videoList.innerHTML = '<h3>Manage Videos:</h3>';
+        
+        data.forEach(video => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                ${video.name} 
+                <button onclick="deleteVideo('${video.name}')">Delete</button>
+            `;
+            videoList.appendChild(div);
+        });
+    }
+
+    async function deleteVideo(videoName) {
+        if (!confirm('Delete this video?')) return;
+        
+        const { error } = await supabase.storage
+            .from(bucketName)
+            .remove([videoName]);
+
+        if (error) alert('Delete error: ' + error.message);
+        else listVideos();
+    }
+</script>
+</body>
+</html>
